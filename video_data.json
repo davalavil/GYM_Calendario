@@ -1,14 +1,8 @@
 {
     "2025-07-01": [
         {
-            "readable_name": "Hombro",
-            "url": "Videos/250701_Hombro.mp4"
-        }
-    ],
-    "2025-07-02": [
-        {
-            "readable_name": "Piernas",
-            "url": "Videos/250702_Piernas.mp4"
+            "readable_name": "Hombros",
+            "url": "Videos/250701_Hombros.mp4"
         }
     ],
     "2025-07-03": [
@@ -21,6 +15,18 @@
         {
             "readable_name": "Abdominales",
             "url": "Videos/250704_Abdominales.mp4"
+        }
+    ],
+    "2025-07-10": [
+        {
+            "readable_name": "Triceps",
+            "url": "Videos/250710_Triceps.mp4"
+        }
+    ],
+    "2025-07-02": [
+        {
+            "readable_name": "Piernas",
+            "url": "Videos/250702_Piernas.mp4"
         }
     ]
 }
