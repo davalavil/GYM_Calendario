@@ -1,0 +1,26 @@
+{
+    "2025-07-01": [
+        {
+            "readable_name": "Hombro",
+            "url": "Videos/250701_Hombro.mp4"
+        }
+    ],
+    "2025-07-02": [
+        {
+            "readable_name": "Piernas",
+            "url": "Videos/250702_Piernas.mp4"
+        }
+    ],
+    "2025-07-03": [
+        {
+            "readable_name": "Brazos",
+            "url": "Videos/250703_Brazos.mp4"
+        }
+    ],
+    "2025-07-04": [
+        {
+            "readable_name": "Abdominales",
+            "url": "Videos/250704_Abdominales.mp4"
+        }
+    ]
+}

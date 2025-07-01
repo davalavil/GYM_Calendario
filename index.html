@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Videos por Fecha</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr); /* 7 días por semana */
+            gap: 10px;
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .day {
+            border: 1px solid #eee;
+            padding: 15px 10px;
+            text-align: center;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+            min-height: 80px; /* Asegura un tamaño mínimo */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .day:hover {
+            background-color: #e0e0e0;
+            cursor: pointer;
+        }
+        .day-number {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .video-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.8em;
+            max-height: 40px; /* Limita la altura para que no abulte demasiado */
+            overflow-y: auto; /* Si hay muchos videos, se puede hacer scroll */
+            width: 100%; /* Para que el texto se corte bien */
+        }
+        .video-list li {
+            margin-bottom: 3px;
+        }
+        .video-list a {
+            text-decoration: none;
+            color: #007bff;
+            display: block; /* Para que ocupe todo el espacio */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .video-list a:hover {
+            text-decoration: underline;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header-row h2 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        .month-year-selector {
+            display: flex;
+            gap: 10px;
+        }
+        .month-year-selector button,
+        .month-year-selector select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        .month-year-selector button:hover {
+            background-color: #eee;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Dashboard de Videos</h1>
+
+        <div class="header-row">
+            <div class="month-year-selector">
+                <button id="prevMonth">❮ Mes Anterior</button>
+                <select id="monthSelect">
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+                <select id="yearSelect">
+                    <option value="2023">2023</option>
+                    <option value="2024">2024</option>
+                    <option value="2025" selected>2025</option>
+                </select>
+                <button id="nextMonth">Mes Siguiente ❯</button>
+            </div>
+            <h2 id="currentMonthYear"></h2> <!-- Inicialmente vacío -->
+        </div>
+
+        <div class="calendar-grid">
+            <!-- Encabezados de los días de la semana -->
+            <div>Dom</div>
+            <div>Lun</div>
+            <div>Mar</div>
+            <div>Mié</div>
+            <div>Jue</div>
+            <div>Vie</div>
+            <div>Sáb</div>
+
+            <!-- Aquí se generarán los días del calendario -->
+        </div>
+    </div>
+
+    <script>
+        // --- LÓGICA DEL CALENDARIO ---
+        const calendarGrid = document.querySelector('.calendar-grid');
+        const monthSelect = document.getElementById('monthSelect');
+        const yearSelect = document.getElementById('yearSelect');
+        const currentMonthYearDisplay = document.getElementById('currentMonthYear');
+        const prevMonthButton = document.getElementById('prevMonth');
+        const nextMonthButton = document.getElementById('nextMonth');
+
+        let currentYear = parseInt(yearSelect.value);
+        let currentMonth = parseInt(monthSelect.value); // El valor es 1-12
+
+        let allVideoData = {}; // Variable para almacenar los datos del JSON
+
+        // --- FUNCIÓN PARA CARGAR LOS DATOS DEL JSON ---
+        async function loadVideoData() {
+            try {
+                const response = await fetch('video_data.json'); // Carga el archivo JSON
+                if (!response.ok) {
+                    // Si el archivo no existe o hay un error, intentamos seguir sin datos.
+                    console.warn(`No se pudo cargar video_data.json (Estado: ${response.status}). El calendario se mostrará sin videos.`);
+                    allVideoData = {}; // Aseguramos que esté vacío si hay error
+                    return; // Salimos de la función
+                }
+                allVideoData = await response.json();
+                console.log("Datos de video cargados:", allVideoData);
+            } catch (error) {
+                console.error("Error al procesar video_data.json:", error);
+                allVideoData = {}; // Aseguramos que esté vacío en caso de error de parsing
+            }
+        }
+
+
+        function renderCalendar(year, month) {
+            // Limpiar el grid y añadir los encabezados de los días de la semana
+            calendarGrid.innerHTML = `
+                <div>Dom</div>
+                <div>Lun</div>
+                <div>Mar</div>
+                <div>Mié</div>
+                <div>Jue</div>
+                <div>Vie</div>
+                <div>Sáb</div>
+            `;
+
+            const firstDayOfMonth = new Date(year, month - 1, 1); // monthIndex es 0-11
+            const lastDayOfMonth = new Date(year, month, 0); // El día 0 del mes siguiente es el último día del mes actual
+            const startingDayOfWeek = firstDayOfMonth.getDay(); // 0 para Domingo, 1 para Lunes, etc.
+            const totalDays = lastDayOfMonth.getDate();
+
+            // Añadir celdas vacías antes del primer día para alinear el calendario
+            for (let i = 0; i < startingDayOfWeek; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.classList.add('day');
+                calendarGrid.appendChild(emptyDay);
+            }
+
+            // Añadir los días del mes
+            for (let day = 1; day <= totalDays; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('day');
+
+                const dayNumberElement = document.createElement('div');
+                dayNumberElement.classList.add('day-number');
+                dayNumberElement.textContent = day;
+                dayElement.appendChild(dayNumberElement);
+
+                // Construir la clave de fecha para buscar en los datos
+                const currentDateKey = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                // Buscar si hay videos para este día en los datos cargados
+                const videosForThisDay = allVideoData[currentDateKey];
+
+                if (videosForThisDay && videosForThisDay.length > 0) {
+                    const videoListElement = document.createElement('ul');
+                    videoListElement.classList.add('video-list');
+                    
+                    videosForThisDay.forEach(video => {
+                        const listItem = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.href = video.url;
+                        link.textContent = video.readable_name; // Usar el nombre legible extraído por Python
+                        link.target = "_blank"; // Abrir el enlace en una nueva pestaña
+                        listItem.appendChild(link);
+                        videoListElement.appendChild(listItem);
+                    });
+                    dayElement.appendChild(videoListElement);
+                }
+
+                calendarGrid.appendChild(dayElement);
+            }
+
+            // Actualizar el título del mes y año en la cabecera
+            const monthName = firstDayOfMonth.toLocaleString('es-ES', { month: 'long' });
+            currentMonthYearDisplay.textContent = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+
+            // Sincronizar los selectores con la vista actual (útil si se navega con las flechas)
+            monthSelect.value = month;
+            yearSelect.value = year;
+        }
+
+        // --- MANEJADORES DE EVENTOS PARA NAVEGACIÓN ---
+
+        // Manejar cambios en los selectores de mes y año
+        monthSelect.addEventListener('change', () => {
+            currentMonth = parseInt(monthSelect.value);
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        yearSelect.addEventListener('change', () => {
+            currentYear = parseInt(yearSelect.value);
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        // Navegación entre meses con botones
+        prevMonthButton.addEventListener('click', () => {
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        nextMonthButton.addEventListener('click', () => {
+            currentMonth++;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            }
+            renderCalendar(currentYear, currentMonth);
+        });
+
+        // --- INICIO DE LA APLICACIÓN ---
+        // La lógica principal: primero cargamos los datos del JSON asíncronamente,
+        // y una vez que los datos están disponibles (o se sabe que no hay),
+        // renderizamos el calendario con esos datos.
+        async function initializeApp() {
+            await loadVideoData(); // Esperamos a que los datos se carguen
+            renderCalendar(currentYear, currentMonth); // Renderizamos el calendario con los datos cargados (o vacíos)
+        }
+
+        initializeApp(); // Llamamos a la función de inicialización al cargar la página
+    </script>
+
+</body>
+</html>
